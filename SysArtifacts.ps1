@@ -13,8 +13,12 @@ Script collects various system artifacts that are useful for incident response a
 CSV format and email 
 #> 
 
+
 clear
-$dateObj = New-Object PSObject # Date and time object 
+##########################################################
+# Date and time object 
+
+$dateObj = New-Object PSObject
 
 $date = Get-Date #system date and time 
 $timezone = Get-TimeZone #PC timezone
@@ -24,8 +28,11 @@ $dateObj | Add-Member Current_Date_Time $date
 $dateObj | Add-Member TimeZone $timezone
 $dateObj | Add-Member PC_Uptime_hours $PCUptime
 
+write-host "##########################################################"
 write-host "System Date and Time information: "
-write-host ($dateObj | format-table | Out-String) 
+write-host ($dateObj | format-list | Out-String) 
+
+##########################################################
 #OS information 
 
 $OSobj = New-Object PSObject #OS object
@@ -36,8 +43,11 @@ $FullVer = [System.Environment]::OSVersion.Version  #Major, Minor, Build and rev
 $OSobj | Add-Member TypicalName $TypicalName
 $OSobj | Add-Member Major_Minor_Build_Revision $FullVer
 
+write-host "##########################################################"
 write-host "OS information: " 
-Write-host ($OSobj | Format-Table |  Out-String)
+Write-host ($OSobj | Format-list |  Out-String)
+
+##########################################################
 
 #System hardware specs 
 
@@ -61,12 +71,46 @@ $HardwareObj | Add-Member Drives $AllDrives
 $Hardwareobj | Add-Member MountPoints $logicalDrives
 
 
+write-host "##########################################################"
 
 write-host "System Hardware information:"
-write-host ($HardwareObj | format-table| out-string)
+write-host ($HardwareObj | format-list| out-string)
+
+##########################################################
 
 #Domain controller information 
 
 $DomainObj = New-Object PSobject # new Domain controller object 
 
-$DCIP = 
+
+##########################################################
+#hostname information 
+
+$hostname = gwmi win32_computersystem | ft Name, Domain
+
+
+write-host "##########################################################"
+write-host "Hostname and Domain information:"
+write-host ($hostname | format-list |out-string)
+
+##########################################################
+
+#Local users 
+
+$SID = gwmi win32_useraccount | ft Name, SID 
+
+write-host "##########################################################"
+write-host "Local User Information: " 
+
+write-host ($SID | format-list | Out-String)
+
+##########################################################
+#Start at boot 
+
+$services = get-service | where {$_.starttype -eq 'Automatic'} | ft Name, DisplayName 
+
+write-host "##########################################################"
+write-host "Boot Services: "
+write-host ($services | format-list | out-string )
+
+
