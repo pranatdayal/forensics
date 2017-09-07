@@ -41,12 +41,13 @@ Param(
 )
 }
 
+<#
 if($CSV=$True)
 {
-     Invoke-Expression .\SysArtifacts.ps1 | Export-csv -Append -path artifacts.csv
+     Invoke-Expression (.\SysArtifacts.ps1 | Export-csv -Append -path artifacts.csv)
      exit
 }
-
+#>
 
 if ($Remote=$False){
     $Session = New-PSSession -ComputerName $ComputerName -Credential (Get-Credential) -UseSSL 
@@ -299,8 +300,6 @@ write-host($driver|ft|out-string)
 #DOWNLOADS AND DOCUMENTS 
 
 write-host "#########################################################"
-write-host "DOWNLOADS AND DOCUMENTS : "
-
 
 read-host "Press enter to exit"
 }
