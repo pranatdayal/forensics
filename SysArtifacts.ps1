@@ -13,14 +13,58 @@ Script collects various system artifacts that are useful for incident response a
 CSV format and email 
 #> 
 
+Param(
+    [string]$ComputerName,
+    [switch]$Remote,
+
+    [switch]$CSV 
+)
+
+
+function param1{
+[CmdletBinding()]
+Param(
+  [Parameter(Mandatory=$False)]
+   [string]$ComputerName,
+    
+   [switch]$Remote,
+
+   [switch]$CSV
+)
+}
+
+if($CSV=$True)
+{
+     Invoke-Expression .\SysArtifacts.ps1 | Export-csv -Append -path artifacts.csv
+     exit
+}
+
+
+if ($Remote=$False){
+    $Session = New-PSSession -ComputerName $ComputerName -Credential (Get-Credential) -UseSSL 
+    $FileContents = Get-Content -Path ($PSSCriptRoot+"\SysArtifacts.ps1")
+    Invoke-Command -Session $Session -ScriptBlock {
+        param($FilePath,$data)
+        Set-Content -Path $FilePath -Value $data
+    } -ArgumentList "C:\Windows\SysArtifacts.ps1",$FileContents
+    Invoke-Command -Session $Session -ScriptBlock{'C:\Windows\SysArtifacts.ps1'}
+}
+
+else{
 
 clear
+
 
 write-host " "
 write-host "Digital forensics and incident response script" 
 write-host "this script collects system artifacts"
 write-host " " 
 write-host " " 
+
+write-host "Use -ComputerName and -Remote for remote session"
+write-host " " 
+write-host "Use -CSV to export to CSV file"
+write-host  " "  
 
 ##########################################################
 # Date and time object 
@@ -206,15 +250,50 @@ write-host ($prog | fl | out-string)
 
 ##########################################################
 #PROCESSES 
-$process = get-process
-$processname = get-process | % processname 
-$processID  = get-process | % ID 
-$processParentID = (gwmi win32_process | ? processid -eq $process).parentprocessID
+$processes = get-process | ft processname,id,path,owner
 
 write-host "#########################################################"
 write-host "RUNNING PROCESSES : "
+write-host ($processes | Out-String)
+
+write-host "Process Tree :" 
+Function Show-ProcessTree
+{
+    Function Get-ProcessTree($proc,$depth=1)
+    {
+        $process | Where-Object {$_.ParentProcessId -eq $proc.ProcessID -and $_.ParentProcessId -ne 0} | ForEach-Object {
+            "{0}|--{1} pid={2} ppid={3}" -f (" "*3*$depth),$_.Name,$_.ProcessID,$_.ParentProcessId
+            Get-ProcessTree $_ (++$depth)
+            $depth--
+        }
+    }
+
+    $filter = {-not (Get-Process -Id $_.ParentProcessId -ErrorAction SilentlyContinue) -or $_.ParentProcessId -eq 0}
+    $process = gwmi Win32_Process
+    $top = $process | Where-Object $filter | Sort-Object ProcessID
+    foreach ($proc in $top)
+    {
+        "{0} pid={1}" -f $proc.Name, $proc.ProcessID
+        Get-ProcessTree $proc
+    }
+}
+
+Show-ProcessTree
+##########################################################
+#DRIVER 
+
+$driver = Get-WmiObject Win32_PnPSignedDriver| ft devicename, driverversion,installdate,location
+write-host "#########################################################"
+write-host "DRIVER INFORMATION : "
+write-host($driver|ft|out-string)
+
+##########################################################
+#DOWNLOADS AND DOCUMENTS 
+
+write-host "#########################################################"
+write-host "DOWNLOADS AND DOCUMENTS : "
 
 
-
-
+read-host "Press enter to exit"
+}
 
