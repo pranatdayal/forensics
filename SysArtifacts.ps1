@@ -11,10 +11,14 @@ Script collects various system artifacts that are useful for incident response a
 .OUTPUTS 
 CSV format and console
 
-.PARAMETERS 
--ComputerName : specify computerName for PSRemote 
--Remote : Switch to enable PSRemote 
--CSV: To output to CSV File  
+.PARAMETER ComputerName 
+specify computerName for PSRemote 
+
+.PARAMETER Remote 
+Switch to enable PSRemote 
+
+.PARAMETER CSV
+To output to CSV File  
 #> 
 
 Param(
