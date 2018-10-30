@@ -1,6 +1,6 @@
-# DFIR_pxd5104_CSEC475
+# DFIR
 Pranat Dayal 
-Windows digital forensics and incident response scripts 
+Digital forensics and incident response scripts 
 
 SysArtifacts.ps1:
 ----------------
